@@ -14,30 +14,6 @@ function openConfigSidebar() {
   SpreadsheetApp.getUi().showSidebar(htmlOutput);
 }
 
-
-
-// Other existing functions (updateSheetConfig, addNewWeekConfig, logStoredProperties) go here...
-
-
-function setCurrentWeek(currentWeek) {
-  // Assuming setCurrentWeek is a valid function that updates a property or performs some action
-  PropertiesService.getScriptProperties().setProperty('currentWeek', currentWeek);
-}
-
-
-function updateSheetConfig(currentWeek) {
-  setCurrentWeek(currentWeek);
-  const currentWeekIndex = Math.max(currentWeek - 22, 0); // Ensure the index is never less than 0
-
-
-  // Log the update for verification
-  Logger.log(`Updated current week to: ${currentWeek}`);
-  Logger.log(`Updated current week index to: ${currentWeekIndex}`);
-}
-
-
-
-
 function addNewWeekConfig(config) {
   try {
     const { newWeekIndex, weekRows, summarySheetStartRow } = config;
@@ -69,7 +45,6 @@ function addNewWeekConfig(config) {
   }
 }
 
-
 function logStoredProperties() {
   try {
     const scriptProperties = PropertiesService.getScriptProperties();
@@ -81,19 +56,13 @@ function logStoredProperties() {
   }
 }
 
+const scriptProperties = PropertiesService.getScriptProperties();
 
-// Add this function to retrieve the source sheets config
 function getSourceSheetsConfigFromScript() {
-  const storedConfig = PropertiesService.getScriptProperties().getProperty('sourceSheetsConfig');
-  const dynamicConfig = storedConfig ? JSON.parse(storedConfig) : [];
- 
-  // Merge static and dynamic configurations
-  return configData.sourceSheetsConfig.map(sheet => {
-    const dynamicSheet = dynamicConfig.find(dSheet => dSheet.sheetName === sheet.sheetName);
-    if (dynamicSheet) {
-      sheet.weekRows = [...sheet.weekRows, ...dynamicSheet.weekRows.slice(sheet.weekRows.length)];
-    }
-    return sheet;
-  });
+  const storedConfig = JSON.parse(scriptProperties.getProperty('sourceSheetsConfig')) || [];
+  return configData.sourceSheetsConfig.map(sheet => ({
+    ...sheet,
+    weekRows: [...sheet.weekRows, ...(storedConfig.find(dSheet => dSheet.sheetName === sheet.sheetName)?.weekRows.slice(sheet.weekRows.length) || [])]
+  }));
 }
 

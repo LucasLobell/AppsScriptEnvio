@@ -35,36 +35,40 @@ function processSheet(sheetConfig, summarySheet, allPossibleWords, possiblePrefi
   const sourceSpreadsheet = SpreadsheetApp.openByUrl(sheetConfig.url);
   const sourceSheet = sourceSpreadsheet.getSheetByName(sheetConfig.sheetName);
 
+  const columnsPerDay = 6; // Number of columns for each day
   const days = ['seg.', 'ter.', 'qua.', 'qui.', 'sex.'];
-  const dayColumnRanges = ['B:G', 'H:M', 'N:S', 'T:Y', 'Z:AF'];
 
   days.forEach((day, index) => {
     if (selectedDay !== 'all' && day !== selectedDay) return;
 
-    const dayColumnRange = dayColumnRanges[index];
-    const morningRange = `${dayColumnRange.split(':')[0]}${weekRowNumber + 2}:${dayColumnRange.split(':')[1]}${weekRowNumber + 6}`;
-    const afternoonRange = `${dayColumnRange.split(':')[0]}${weekRowNumber + 8}:${dayColumnRange.split(':')[1]}${weekRowNumber + 12}`;
-    const targetCell = `${sheetConfig.targetColumn}${summarySheetStartRow + index}`; // Adjust row index as necessary
+    const startColumn = (index * columnsPerDay) + 2; // Starting column index (adjust as per structure)
+    const endColumn = startColumn + columnsPerDay - 1;
+    
+    // Batch retrieve the entire range in one call for both morning and afternoon
+    const fullRange = sourceSheet.getRange(`${getColumnLetter(startColumn)}${weekRowNumber + 2}:${getColumnLetter(endColumn)}${weekRowNumber + 12}`);
+    const fullValues = fullRange.getValues();
+    const fullFontColors = fullRange.getFontColors();
+    const fullBackgroundColors = fullRange.getBackgrounds();
 
-    Logger.log(`Processing ${day} for sheet ${sheetConfig.sheetName}...`);
-    Logger.log(`Morning Range: ${morningRange}`);
-    Logger.log(`Afternoon Range: ${afternoonRange}`);
+    // Morning and afternoon slices from the full batch data
+    const morningValues = fullValues.slice(0, 5).flat();
+    const afternoonValues = fullValues.slice(6).flat();
+    const morningFontColors = fullFontColors.slice(0, 5).flat();
+    const afternoonFontColors = fullFontColors.slice(6).flat();
+    const morningBackgroundColors = fullBackgroundColors.slice(0, 5).flat();
+    const afternoonBackgroundColors = fullBackgroundColors.slice(6).flat();
 
-    const morningActivities = sourceSheet.getRange(morningRange).getValues().flat();
-    const afternoonActivities = sourceSheet.getRange(afternoonRange).getValues().flat();
-    const morningFontColors = sourceSheet.getRange(morningRange).getFontColors().flat();
-    const afternoonFontColors = sourceSheet.getRange(afternoonRange).getFontColors().flat();
-    const morningBackgroundColors = sourceSheet.getRange(morningRange).getBackgrounds().flat();
-    const afternoonBackgroundColors = sourceSheet.getRange(afternoonRange).getBackgrounds().flat();
-
-    const activities = morningActivities.concat(afternoonActivities);
-    const fontColors = morningFontColors.concat(afternoonFontColors);
-    const backgroundColors = morningBackgroundColors.concat(afternoonBackgroundColors);
+    const activities = [...morningValues, ...afternoonValues];
+    const fontColors = [...morningFontColors, ...afternoonFontColors];
+    const backgroundColors = [...morningBackgroundColors, ...afternoonBackgroundColors];
 
     const foundWords = processActivities(activities, fontColors, backgroundColors, allPossibleWords, possiblePrefixes);
     const combinedWordsString = Array.from(foundWords).join('/');
 
     Logger.log(`Found words for ${day}: ${combinedWordsString}`);
+
+    // Calculate the target cell in the summary sheet
+    const targetCell = `${sheetConfig.targetColumn}${summarySheetStartRow + index}`;
 
     updateSummarySheet(summarySheet, targetCell, combinedWordsString);
   });
@@ -72,40 +76,41 @@ function processSheet(sheetConfig, summarySheet, allPossibleWords, possiblePrefi
 
 function updateSummarySheet(summarySheet, targetCell, combinedWordsString) {
   const targetRange = summarySheet.getRange(targetCell);
-  Logger.log(`Updating target cell ${targetCell} with value: ${combinedWordsString}`);
-
-  targetRange.setValue(combinedWordsString);
-  if (combinedWordsString) {
-    targetRange.setBackground('#ffc000'); // Set background to yellow if words are found
-  } else {
-    targetRange.setBackground('#00b050'); // Reset background color if no words found
-  }
-
+  targetRange.setValues([[combinedWordsString]]); // Use setValues even for single cells
+  targetRange.setBackground(combinedWordsString ? '#ffc000' : '#00b050');
   Logger.log(`Set value for ${targetCell}: ${combinedWordsString}`);
 }
 
-
 function processActivities(activities, fontColors, backgroundColors, allPossibleWords, possiblePrefixes) {
   const foundWords = new Set();
+
   activities.forEach((activity, index) => {
-    if (activity && typeof activity === 'string' && activity.split(/[\s\-./]+/).length > 1 &&
-        fontColors[index] !== '#ff0000' && backgroundColors[index] !== '#ff0000') {
+    if (activity && fontColors[index] !== '#ff0000' && backgroundColors[index] !== '#ff0000') {
       const words = activity.trim().split(/[\s\-./]+/);
       let prefixFound = false;
-      for (let idx = 0; idx < words.length; idx++) {
-        const word = words[idx];
+
+      words.forEach(word => {
         if (possiblePrefixes.includes(word)) {
           prefixFound = true;
-        } else if (prefixFound) {
-          const nextWords = words.slice(idx).join(' ');
-          const matchedWord = allPossibleWords.find(possibleWord => nextWords.toLowerCase().includes(possibleWord.toLowerCase()));
-          if (matchedWord) {
-            foundWords.add(matchedWord.toUpperCase());
-            prefixFound = false;
-          }
+        } else if (prefixFound && allPossibleWords.some(possibleWord => word.toLowerCase().includes(possibleWord.toLowerCase()))) {
+          foundWords.add(word.toUpperCase());
+          prefixFound = false;
         }
-      }
+      });
     }
   });
+
   return foundWords;
+}
+
+// Helper function to convert column index to letter (A = 1, B = 2, etc.)
+function getColumnLetter(columnIndex) {
+  let letter = '';
+  let temp = columnIndex;
+  while (temp > 0) {
+    const mod = (temp - 1) % 26;
+    letter = String.fromCharCode(mod + 65) + letter;
+    temp = Math.floor((temp - mod) / 26);
+  }
+  return letter;
 }
