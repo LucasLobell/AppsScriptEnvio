@@ -1,43 +1,43 @@
 {
-    "timeZone": "America/Sao_Paulo",
-    "dependencies": {
-    },
-    "exceptionLogging": "STACKDRIVER",
-     "oauthScopes": [
-      "https://www.googleapis.com/auth/spreadsheets",
-      "https://www.googleapis.com/auth/script.external_request",
-      "https://www.googleapis.com/auth/script.container.ui"
-    ],
-    "runtimeVersion": "V8",
-    "sheets": {
-      "macros": [{
-        "menuName": "Yellow",
-        "functionName": "Yellow",
-        "defaultShortcut": "Ctrl+Alt+Shift+2"
-      }, {
-        "menuName": "Red",
-        "functionName": "Red",
-        "defaultShortcut": "Ctrl+Alt+Shift+3"
-      }, {
-        "menuName": "White",
-        "functionName": "White",
-        "defaultShortcut": "Ctrl+Alt+Shift+5"
-      }, {
-        "menuName": "Green",
-        "functionName": "Green",
-        "defaultShortcut": "Ctrl+Alt+Shift+4"
-      }, {
-        "menuName": "Data",
-        "functionName": "Data",
-        "defaultShortcut": "Ctrl+Alt+Shift+5"
-      }, {
-        "menuName": "Clean",
-        "functionName": "Clean",
-        "defaultShortcut": "Ctrl+Alt+Shift+1"
-      }, {
-        "menuName": "Is",
-        "functionName": "Is",
-        "defaultShortcut": "Ctrl+Alt+Shift+7"
-      }]
-    }
+  "timeZone": "America/Sao_Paulo",
+  "dependencies": {
+  },
+  "exceptionLogging": "STACKDRIVER",
+   "oauthScopes": [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/script.external_request",
+    "https://www.googleapis.com/auth/script.container.ui"
+  ],
+  "runtimeVersion": "V8",
+  "sheets": {
+    "macros": [{
+      "menuName": "Yellow",
+      "functionName": "Yellow",
+      "defaultShortcut": "Ctrl+Alt+Shift+2"
+    }, {
+      "menuName": "Red",
+      "functionName": "Red",
+      "defaultShortcut": "Ctrl+Alt+Shift+3"
+    }, {
+      "menuName": "White",
+      "functionName": "White",
+      "defaultShortcut": "Ctrl+Alt+Shift+5"
+    }, {
+      "menuName": "Green",
+      "functionName": "Green",
+      "defaultShortcut": "Ctrl+Alt+Shift+4"
+    }, {
+      "menuName": "Data",
+      "functionName": "Data",
+      "defaultShortcut": "Ctrl+Alt+Shift+5"
+    }, {
+      "menuName": "Clean",
+      "functionName": "Clean",
+      "defaultShortcut": "Ctrl+Alt+Shift+1"
+    }, {
+      "menuName": "Is",
+      "functionName": "Is",
+      "defaultShortcut": "Ctrl+Alt+Shift+7"
+    }]
   }
+}

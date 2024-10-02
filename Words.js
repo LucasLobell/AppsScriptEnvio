@@ -1,5 +1,5 @@
 function getPossibleWords() {
-  return ['words'];
+  return [];
 }
 
 function getAllPossibleWords(possibleWords) {
