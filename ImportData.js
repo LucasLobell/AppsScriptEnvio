@@ -85,23 +85,50 @@ function processActivities(activities, fontColors, backgroundColors, allPossible
   const foundWords = new Set();
 
   activities.forEach((activity, index) => {
-    if (activity && fontColors[index] !== '#ff0000' && backgroundColors[index] !== '#ff0000') {
+    if (
+      activity &&
+      typeof activity === 'string' &&
+      activity.trim().split(/[\s\-./]+/).length > 1 &&
+      fontColors[index] !== '#ff0000' &&
+      backgroundColors[index] !== '#ff0000'
+    ) {
       const words = activity.trim().split(/[\s\-./]+/);
       let prefixFound = false;
 
-      words.forEach(word => {
+      for (let idx = 0; idx < words.length; idx++) {
+        const word = words[idx];
+
         if (possiblePrefixes.includes(word)) {
           prefixFound = true;
-        } else if (prefixFound && allPossibleWords.some(possibleWord => word.toLowerCase().includes(possibleWord.toLowerCase()))) {
-          foundWords.add(word.toUpperCase());
-          prefixFound = false;
+          // Start matching from the next word after the prefix
+          for (let startIdx = idx + 1; startIdx < words.length; startIdx++) {
+            let matched = false;
+            let phrase = '';
+            // Construct phrases up to 5 words long
+            for (let endIdx = startIdx; endIdx < Math.min(startIdx + 5, words.length); endIdx++) {
+              phrase = words.slice(startIdx, endIdx + 1).join(' ');
+              const matchedWord = allPossibleWords.find(
+                possibleWord => possibleWord.toLowerCase() === phrase.toLowerCase()
+              );
+              if (matchedWord) {
+                foundWords.add(matchedWord.toUpperCase());
+                matched = true;
+                prefixFound = false; // Reset after finding a match
+                break;
+              }
+            }
+            if (matched) {
+              break; // Break out of the loop once a match is found
+            }
+          }
         }
-      });
+      }
     }
   });
 
   return foundWords;
 }
+
 
 // Helper function to convert column index to letter (A = 1, B = 2, etc.)
 function getColumnLetter(columnIndex) {

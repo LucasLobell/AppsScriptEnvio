@@ -1,7 +1,5 @@
 function getPossibleWords() {
-  let possibleWords = PropertiesService.getScriptProperties().getProperty('possibleWords');
-  if (!possibleWords) {
-    possibleWords = [
+  return [
     'JLS', 'Kucmaq', 'Transforme Lojas', 'Cavazotto', 'Patrimar', 'Accord',
     'Inspirare', 'Perfil Maq', 'FPS', 'Pelo e Pele', 'Jovino', 'BOOM',
     'Laborene', 'Engservice', 'Transforme Loja', 'Platocom', 'MRSUL', 'ACR',
@@ -48,13 +46,8 @@ function getPossibleWords() {
     'VISUAL', 'VOSSER AQUECEDORES', 'VOSSER', 'WINNING PACK', 'WINNING', 'ZEEP', 'ZOBOR',
     'Ferdimat', 'Nardimaq',/*temp*/'Nardimac', 'Ls Brasil', 'Ls', 'Ampla', 'Sofisticasa', 'Horizonte',
     'Bignotto', 'Bignoto', 'São José', 'São Jose', 'Inox SJ', 'Fabbris', 'agromec', 'agromeq', 'MDM', 'mdm', 'Mega',
-    'Ortometal', 'Divino', 'AW', 'Automatiza World', 'Automatiza'
+    'Ortometal', 'Divino', 'AW', 'Automatiza World', 'Automatiza', 'Baldan'
   ];
-    PropertiesService.getScriptProperties().setProperty('possibleWords', JSON.stringify(possibleWords));
-  } else {
-    possibleWords = JSON.parse(possibleWords);
-  }
-  return possibleWords;
 }
 
 function getAllPossibleWords(possibleWords) {
