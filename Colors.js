@@ -34,15 +34,10 @@ function Clean() {
 
 function updateSummarySheetCellColors() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var summarySheet = ss.getSheetByName('2024'); // Correct sheet name
+  var summarySheet = ss.getSheetByName('2024'); // Adjust the sheet name if necessary
 
-  // Use existing variable for data starting row
-  if (!dataStartRow) {
-    // If summarySheetStartRow is not defined globally, you might need to define it here
-    // For example, find the starting row based on today's date
-    var todayDateString = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd/MM/yyyy");
-    var dataStartRow = findStartingRowInSummarySheet(summarySheet, todayDateString);
-  }
+  // Set dataStartRow to the first row of data (after headers)
+  var dataStartRow = 2; // Adjust if your data starts at a different row
 
   // Get the last row with data
   var lastRow = summarySheet.getLastRow();
@@ -64,50 +59,64 @@ function updateSummarySheetCellColors() {
   var currentDate = new Date();
   currentDate.setHours(0, 0, 0, 0); // Normalize to midnight
 
-  // Map to store the last mention and future mentions of each company
+  // Map to store mentions of each company
   var companyData = {};
 
   // First, process all dates and implantadores to build the data map
   for (var i = 0; i < dateValues.length; i++) {
     var dateCell = dateValues[i][0];
-    if (dateCell instanceof Date) {
-      var date = new Date(dateCell);
-      date.setHours(0, 0, 0, 0); // Normalize date
+    var date;
 
-      var dateIsPast = date.getTime() < currentDate.getTime();
-      var dateIsFutureOrToday = date.getTime() >= currentDate.getTime();
+    if (dateCell instanceof Date) {
+      date = new Date(dateCell.getFullYear(), dateCell.getMonth(), dateCell.getDate());
+    } else {
+      // Try parsing the date if it's not a Date object
+      date = new Date(dateCell);
+    }
+
+    if (date instanceof Date && !isNaN(date)) {
+      date.setHours(0, 0, 0, 0); // Normalize date
 
       for (var j = 0; j < numImplantadorColumns; j++) {
         var companyCell = implantadorValues[i][j];
         var companies = companyCell ? companyCell.split('/') : [];
 
         companies.forEach(function(company) {
-          company = company.trim().toUpperCase(); // Standardize company name
+          company = company.trim().toUpperCase();
 
-          if (company) { // Ensure company is not empty after trimming
+          if (company) {
             if (!companyData[company]) {
               companyData[company] = {
-                lastMentionDate: null,
-                lastMentionRow: null,
-                lastMentionColumn: null,
-                futureMentions: []
+                mentions: [], // array of {date, rowIndex, weekNumber}
+                lastMentionDateBeforeToday: null,
+                lastMentionWeekNumber: null
               };
             }
 
-            if (dateIsPast) {
-              // Past mention
-              if (!companyData[company].lastMentionDate || date.getTime() > companyData[company].lastMentionDate.getTime()) {
-                companyData[company].lastMentionDate = date;
-                companyData[company].lastMentionRow = dataStartRow + i;
-                companyData[company].lastMentionColumn = implantadorStartColumn + j;
+            // Store the mention
+            var rowIndex = dataStartRow + i;
+            var columnIndex = implantadorStartColumn + j;
+            var weekNumber = getWeekNumber(date);
+
+            companyData[company].mentions.push({
+              date: date,
+              rowIndex: rowIndex,
+              columnIndex: columnIndex,
+              weekNumber: weekNumber
+            });
+
+            if (date.getTime() < currentDate.getTime()) {
+              // Date is before today
+              if (!companyData[company].lastMentionDateBeforeToday || date.getTime() > companyData[company].lastMentionDateBeforeToday.getTime()) {
+                companyData[company].lastMentionDateBeforeToday = date;
+                companyData[company].lastMentionWeekNumber = weekNumber;
               }
-            } else if (dateIsFutureOrToday) {
-              // Today or future mention
-              companyData[company].futureMentions.push(date);
             }
           }
         });
       }
+    } else {
+      Logger.log('Invalid date at row ' + (dataStartRow + i) + ': ' + dateCell);
     }
   }
 
@@ -115,15 +124,46 @@ function updateSummarySheetCellColors() {
   for (var company in companyData) {
     var data = companyData[company];
 
-    if (data.lastMentionDate) {
-      var daysSinceLastMention = (currentDate.getTime() - data.lastMentionDate.getTime()) / (1000 * 60 * 60 * 24);
+    if (data.lastMentionDateBeforeToday) {
+      var daysSinceLastMention = calculateBusinessDaysBetween(data.lastMentionDateBeforeToday, currentDate);
 
-      if (daysSinceLastMention >= 2 && data.futureMentions.length === 0) {
-        // Color the cell red
-        var cell = summarySheet.getRange(data.lastMentionRow, data.lastMentionColumn);
-        cell.setBackground('red');
+      Logger.log('Company: ' + company);
+      Logger.log('Last Mention Date Before Today: ' + data.lastMentionDateBeforeToday);
+      Logger.log('Business Days Since Last Mention: ' + daysSinceLastMention);
+
+      if (daysSinceLastMention >= 2) {
+        // Color all mention cells during the week of the last occurrence
+        data.mentions.forEach(function(mention) {
+          if (mention.weekNumber === data.lastMentionWeekNumber) {
+            var cell = summarySheet.getRange(mention.rowIndex, mention.columnIndex);
+            cell.setBackground('red');
+          }
+        });
       }
-      // Else, do not modify the cell's background color
     }
   }
+}
+
+// Helper function to calculate business days between two dates (excluding weekends)
+function calculateBusinessDaysBetween(startDate, endDate) {
+  var count = 0;
+  var currentDate = new Date(startDate.getTime());
+  currentDate.setHours(0, 0, 0, 0);
+
+  while (currentDate < endDate) {
+    var dayOfWeek = currentDate.getDay();
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) { // Exclude Sundays (0) and Saturdays (6)
+      count++;
+    }
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  return count;
+}
+
+// Helper function to get the week number of a date
+function getWeekNumber(date) {
+  var oneJan = new Date(date.getFullYear(), 0, 1);
+  var dayOfYear = Math.floor((date - oneJan) / (24 * 60 * 60 * 1000)) + 1;
+  return Math.ceil(dayOfYear / 7);
 }

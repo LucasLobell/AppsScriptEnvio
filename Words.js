@@ -46,7 +46,7 @@ function getPossibleWords() {
     'VISUAL', 'VOSSER AQUECEDORES', 'VOSSER', 'WINNING PACK', 'WINNING', 'ZEEP', 'ZOBOR',
     'Ferdimat', 'Nardimaq',/*temp*/'Nardimac', 'Ls Brasil', 'Ls', 'Ampla', 'Sofisticasa', 'Horizonte',
     'Bignotto', 'Bignoto', 'São José', 'São Jose', 'Inox SJ', 'Fabbris', 'agromec', 'agromeq', 'MDM', 'mdm', 'Mega',
-    'Ortometal', 'Divino', 'AW', 'Automatiza World', 'Automatiza', 'Baldan'
+    'Ortometal', 'Divino', 'AW', 'Automatiza World', 'Automatiza', 'Baldan', 'Maqinox', 'Caiçara'
   ];
 }
 
@@ -64,5 +64,5 @@ function capitalizeFirstLetter(word) {
 }
 
 function getPossiblePrefixes() {
-  return ['Imp', 'Impl', 'Implantação', 'Implantacao', 'imp', 'impl', 'implantação', 'implantacao', 'Imp.', 'impl.', 'Impl.', 'Imp.', 'Imp/', 'impl/', 'Impl/'];
+  return ['Imp', 'Impl', 'Implantação', 'Implantacao', 'imp', 'impl', 'implantação', 'implantacao', 'Imp.', 'impl.', 'Impl.', 'Imp.', 'Imp/', 'impl/', 'Impl/', 'Implant'];
 }
